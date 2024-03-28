@@ -173,8 +173,48 @@ bool isSorted(float arr[], int n) {
     return true;
 }
 
+void shellSort(float* arr, int n) {
+    for (int gap = n / 2; gap > 0; gap /= 2) {
+        for (int i = gap; i < n; i++) {
+            float temp = arr[i];
+            int j;
+            for (j = i; j >= gap && arr[j - gap] > temp; j -= gap) {
+                arr[j] = arr[j - gap];
+            }
+            arr[j] = temp;
+        }
+    }
+}
+void heapify(float* arr, int n, int i) {
+    int largest = i; 
+    int left = 2 * i + 1; 
+    int right = 2 * i + 2; 
+
+    if (left < n && arr[left] > arr[largest])
+        largest = left;
+
+    if (right < n && arr[right] > arr[largest])
+        largest = right;
+
+    if (largest != i) {
+        swap(arr[i], arr[largest]);
+        heapify(arr, n, largest);
+    }
+}
+
+void heapSort(float* arr, int n) {
+    for (int i = n / 2 - 1; i >= 0; i--)
+        heapify(arr, n, i);
+
+    for (int i=n-1; i>0; i--) {
+        swap(arr[0], arr[i]);
+        heapify(arr, i, 0);
+    }
+}
+
+
 int main() {
-    int tests[] = {10000000, 100000000, 500000000}
+    int tests[] = {10000000, 100000000, 500000000};
     int numTests = sizeof(tests) / sizeof(tests[0]);
 
     pair<string, function<void(float*, int)>> sorts[] = {
@@ -182,7 +222,9 @@ int main() {
         {"Radix Sort Base 2^16", [](float* arr, int n){ radixSort(arr, n, 1<<16); }},
         {"Merge Sort ", [](float* arr, int n){ mergeSort(arr, 0,n-1); }},
         {"Tim Sort ", [](float* arr, int n){ timSort(arr, n); }},
-        {"std::sort", [](float* arr, int n){ sort(arr, arr + n); }}
+        {"std::sort", [](float* arr, int n){ sort(arr, arr + n); }},
+        {"Shell Sort", [](float* arr, int n){ shellSort(arr, n); }},
+		{"Heap Sort", [](float* arr, int n){ heapSort(arr, n); }},
     };
     int numSorts = sizeof(sorts) / sizeof(sorts[0]);
 
