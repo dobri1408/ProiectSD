@@ -8,32 +8,120 @@
 
 using namespace std;
 using namespace std::chrono;
-const float eps = 0.001;
+
 union FloatInt {
     float f;
     unsigned int i;
 };
 
+const int min_run=32;
+int calcMinRun(int n)
+{
+    int r=0;
+    while(n>min_run)
+    {
+        r|=n&1;
+        n>>=1;
+    }
+    return n+r;
+}
+void insertSort(float *a, int st, int dr)
+{
+    int i,j;
+    for(i=st+1;i<=dr;i++)
+        for(j=i;j>st&&a[j]<a[j-1];j--)
+            swap(a[j],a[j-1]);
+}
+void mergeArrays(float *arr, int l, int m, int r) {
+    int len1 = m - l + 1, len2 = r - m;
+    float* left = new float[len1];
+    float* right = new float[len2];
+
+    for (int i = 0; i < len1; i++)
+        left[i] = arr[l + i];
+    for (int i = 0; i < len2; i++)
+        right[i] = arr[m + 1 + i];
+
+    int i = 0;
+    int j = 0;
+    int k = l;
+
+    while (i < len1 && j < len2) {
+        if (left[i] <= right[j]) {
+            arr[k] = left[i];
+            i++;
+        } else {
+            arr[k] = right[j];
+            j++;
+        }
+        k++;
+    }
+
+    while (i < len1) {
+        arr[k] = left[i];
+        k++;
+        i++;
+    }
+
+    while (j < len2) {
+        arr[k] = right[j];
+        k++;
+        j++;
+    }
+
+    delete[] left;
+    delete[] right;
+}
+
+
+void timSort(float *a,int n)
+{
+    int i,j,st,dr,run,mij;
+    run=calcMinRun(n);
+    for(i=0;i<n;i+=run)
+        insertSort(a,i,min(i+run-1,n));
+    for(i=1;i<n;i*=2)
+        for(j=0;j<n;j+=2*i)
+    {
+        st=j;
+        mij=j+i-1;
+        dr=min(j+2*i-1,n);
+        if(mij<dr) mergeArrays(a,st,mij,dr);
+    }
+}
+void mergeSort(float *a,int st,int dr)
+{
+    if(st<dr)
+    {
+        int mij=(st+dr)>>1;
+        mergeSort(a,st,mij);
+        mergeSort(a,mij+1,dr);
+        mergeArrays(a,st,mij,dr);
+    }
+}
+
+
 unsigned int floatToUint(float f) {
     FloatInt conv;
     conv.f = f;
-    unsigned int sign = conv.i & 0x80000000 ? 0x80000000 : 0;
-    unsigned int magnitude = conv.i & 0x7fffffff;
-    // Numerele pozitive sunt tratate normal, numerele negative sunt codate în complement față de 2
-    return sign ? (~magnitude + 1) : (conv.i | 0x80000000);
+    // Inversăm ordinea pentru numerele negative prin utilizarea complementului față de 1 pentru partea de magnitudine.
+    if (conv.i & 0x80000000) { // Verificăm dacă este negativ
+        return ~conv.i; // Inversăm toți biții pentru numerele negative
+    } else {
+        return conv.i | 0x80000000; // Asigurăm că numerele pozitive sunt tratate ca fiind mai mari decât cele negative
+    }
 }
 
 float uintToFloat(unsigned int i) {
-    if (i & 0x80000000) {
-        i &= 0x7fffffff;
-    } else {
-        i = (~i + 1) | 0x80000000;
+    if (i & 0x80000000) { // Dacă a fost pozitiv (după conversia noastră)
+        i &= 0x7FFFFFFF; // Înlăturăm bitul de semn adăugat
+    } else { // Dacă a fost negativ
+        i = ~i; // Inversăm înapoi pentru a obține reprezentarea corectă
     }
     FloatInt conv;
     conv.i = i;
     return conv.f;
 }
-
 void countSort(float* arr, int n, int exp, int base) {
     auto output = new float[n];
     auto count = new int[base]();
@@ -74,24 +162,26 @@ void radixSort(float* arr, int n, int base) {
     }
 }
 bool isSorted(float arr[], int n) {
-	cout << arr[0] << " ";
+	
     for (int i = 1; i < n; i++) {
-		cout << arr[i]<<" ";
+
         if (arr[i - 1] > arr[i]) {
+					cout << arr[i-1] << " " << arr[i]<<" ";
             return false;
         }
     }
     return true;
 }
 
-
 int main() {
-    int tests[] = {5, 10, 11};
+    int tests[] = {10000000, 100000000, 500000000}
     int numTests = sizeof(tests) / sizeof(tests[0]);
 
     pair<string, function<void(float*, int)>> sorts[] = {
         {"Radix Sort Base 10", [](float* arr, int n){ radixSort(arr, n, 10); }},
-        {"Radix Sort Base 16", [](float* arr, int n){ radixSort(arr, n, 16); }},
+        {"Radix Sort Base 2^16", [](float* arr, int n){ radixSort(arr, n, 1<<16); }},
+        {"Merge Sort ", [](float* arr, int n){ mergeSort(arr, 0,n-1); }},
+        {"Tim Sort ", [](float* arr, int n){ timSort(arr, n); }},
         {"std::sort", [](float* arr, int n){ sort(arr, arr + n); }}
     };
     int numSorts = sizeof(sorts) / sizeof(sorts[0]);

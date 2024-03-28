@@ -140,13 +140,46 @@ bool isSorted(int arr[], int n) {
     return true;
 }
 
+void countingSort(int arr[], int n) {
+    // Găsirea valorilor maxime și minime din array pentru a determina dimensiunea array-ului de contorizare
+    int maxVal = arr[0];
+    int minVal = arr[0];
+    for (int i = 1; i < n; i++) {
+        if (arr[i] > maxVal) maxVal = arr[i];
+        if (arr[i] < minVal) minVal = arr[i];
+    }
+    
+    int range = maxVal - minVal + 1;
+
+    // Alocarea și inițializarea array-ului de contorizare
+    int* count = new int[range]();
+    
+    // Contorizarea aparițiilor fiecărui element, ajustându-le cu valoarea minimă pentru a lucra cu indici pozitivi
+    for (int i = 0; i < n; i++) {
+        count[arr[i] - minVal]++;
+    }
+
+    // Reconstruirea array-ului original folosind array-ul de contorizare
+    int index = 0;
+    for (int i = 0; i < range; i++) {
+        while (count[i] > 0) {
+            arr[index++] = i + minVal;
+            count[i]--;
+        }
+    }
+    
+    // Eliberarea memoriei alocate dinamic
+    delete[] count;
+}
+
 int main() {
-    int tests[] = {10000, 100000, 1000000,10000000,100000000,1000000000};
+   int tests[] = {100000, 1000000, 10000000, 100000000, 500000000};
     int numTests = sizeof(tests)/sizeof(tests[0]);
 
     pair<string, function<void(int*, int)>> sorts[] = {
         {"Radix Sort Base 10", [](int* arr, int n){ radixSort(arr, n, 10); }},
         {"Radix Sort Base 2^16", [](int* arr, int n){ radixSort(arr, n, 1<<16); }},
+        {"Counting Sort", [](int* arr, int n){ countingSort(arr, n); }},
         {"Merge Sort", [](int* arr, int n){ mergeSort(arr, 0,n-1); }},
         {"Tim Sort", [](int* arr, int n){ timSort(arr, n); }},
         {"std::sort", [](int* arr, int n) { sort(arr, arr + n); }}
