@@ -8,6 +8,92 @@
 using namespace std;
 using namespace std::chrono;
 
+const int min_run=32;
+int calcMinRun(int n)
+{
+    int r=0;
+    while(n>min_run)
+    {
+        r|=n&1;
+        n>>=1;
+    }
+    return n+r;
+}
+void insertSort(int *a, int st, int dr)
+{
+    int i,j;
+    for(i=st+1;i<=dr;i++)
+        for(j=i;j>st&&a[j]<a[j-1];j--)
+            swap(a[j],a[j-1]);
+}
+void mergeArrays(int *arr, int l, int m, int r) {
+    int len1 = m - l + 1, len2 = r - m;
+    int* left = new int[len1];
+    int* right = new int[len2];
+
+    for (int i = 0; i < len1; i++)
+        left[i] = arr[l + i];
+    for (int i = 0; i < len2; i++)
+        right[i] = arr[m + 1 + i];
+
+    int i = 0;
+    int j = 0;
+    int k = l;
+
+    while (i < len1 && j < len2) {
+        if (left[i] <= right[j]) {
+            arr[k] = left[i];
+            i++;
+        } else {
+            arr[k] = right[j];
+            j++;
+        }
+        k++;
+    }
+
+    while (i < len1) {
+        arr[k] = left[i];
+        k++;
+        i++;
+    }
+
+    while (j < len2) {
+        arr[k] = right[j];
+        k++;
+        j++;
+    }
+
+    delete[] left;
+    delete[] right;
+}
+
+
+void timSort(int *a,int n)
+{
+    int i,j,st,dr,run,mij;
+    run=calcMinRun(n);
+    for(i=0;i<n;i+=run)
+        insertSort(a,i,min(i+run-1,n));
+    for(i=1;i<n;i*=2)
+        for(j=0;j<n;j+=2*i)
+    {
+        st=j;
+        mij=j+i-1;
+        dr=min(j+2*i-1,n);
+        if(mij<dr) mergeArrays(a,st,mij,dr);
+    }
+}
+void mergeSort(int *a,int st,int dr)
+{
+    if(st<dr)
+    {
+        int mij=(st+dr)>>1;
+        mergeSort(a,st,mij);
+        mergeSort(a,mij+1,dr);
+        mergeArrays(a,st,mij,dr);
+    }
+}
+
 int getMax(int arr[], int n) {
     int mx = arr[0];
     for (int i = 1; i < n; i++)
@@ -60,7 +146,9 @@ int main() {
 
     pair<string, function<void(int*, int)>> sorts[] = {
         {"Radix Sort Base 10", [](int* arr, int n){ radixSort(arr, n, 10); }},
-        {"Radix Sort Base 16", [](int* arr, int n){ radixSort(arr, n, 16); }},
+        {"Radix Sort Base 2^16", [](int* arr, int n){ radixSort(arr, n, 1<<16); }},
+        {"Merge Sort", [](int* arr, int n){ mergeSort(arr, 0,n-1); }},
+        {"Tim Sort", [](int* arr, int n){ timSort(arr, n); }},
         {"std::sort", [](int* arr, int n) { sort(arr, arr + n); }}
     };
     int numSorts = sizeof(sorts)/sizeof(sorts[0]);
